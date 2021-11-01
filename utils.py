@@ -113,15 +113,17 @@ def adjust_learning_rate(optimizer, current_epoch):
         param_group['lr'] = param_group['lr'] * shrink_factor
 
     print("The new learning rate is {}".format(optimizer.param_groups[0]['lr']))
+    time.sleep(0.2)
 
 
-def save_checkpoint(model_name, data_name, epoch, epochs_since_improvement, model, optimizer, acc, is_best):
+def save_checkpoint(model_name, data_name, epoch, epochs_since_improvement, model, optimizer, acc, is_best,
+                    split_file=''):
     state = {'epoch': epoch,
              'epochs_since_improvement': epochs_since_improvement,
              'acc': acc,
              'model': model,
              'optimizer': optimizer}
-    filename = 'checkpoint_' + data_name + '_' + model_name + '.pth'
+    filename = 'checkpoint_' + data_name + '_' + model_name + split_file + '.pth'
     torch.save(state, 'checkpoints/' + filename)
     if is_best:
         torch.save(state, 'checkpoints/' + 'BEST_' + filename)
@@ -156,7 +158,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, grad_clip=No
 
     print('\nEpoch: [{:04}] | '
           'Loss[Value(Average)]: {loss.avg:.4f} | '
-          'Accuracy[Value(Average)]: {acc.avg:.4f}'.format(epoch, loss=losses, acc=accs))
+          'Accuracy[Value(Average)]: {acc.avg:.4f}'.format(epoch + 1, loss=losses, acc=accs))
     time.sleep(0.2)
 
 

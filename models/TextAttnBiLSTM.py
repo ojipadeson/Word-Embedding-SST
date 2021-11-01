@@ -24,10 +24,10 @@ class ModelConfig:
     epochs = 120
     batch_size = 16
     workers = 4
-    lr = 1e-4
+    lr = 1e-3
     weight_decay = 1e-5
-    decay_epoch = 15
-    improvement_epoch = 30
+    decay_epoch = 8
+    improvement_epoch = 20
     is_Linux = False
     # print_freq = 100
     checkpoint = None
@@ -101,7 +101,7 @@ class ModelAttnBiLSTM(nn.Module):
         return logits
 
 
-def train_eval(opt):
+def train_eval(opt, train_origin, dev_origin):
     best_acc = 0.
 
     # epoch
@@ -148,14 +148,25 @@ def train_eval(opt):
 
     criterion = nn.CrossEntropyLoss().to(opt.device)
 
+    if train_origin:
+        split_file = 'train_origin'
+    else:
+        split_file = 'train'
+
     train_loader = torch.utils.data.DataLoader(
-        SSTreebankDataset(opt.data_name, opt.output_folder, 'train'),
+        SSTreebankDataset(opt.data_name, opt.output_folder, split_file),
         batch_size=opt.batch_size,
         shuffle=True,
         num_workers=opt.workers if opt.is_Linux else 0,
         pin_memory=True)
+
+    if dev_origin:
+        split_file = 'dev_origin'
+    else:
+        split_file = 'dev'
+
     val_loader = torch.utils.data.DataLoader(
-        SSTreebankDataset(opt.data_name, opt.output_folder, 'dev'),
+        SSTreebankDataset(opt.data_name, opt.output_folder, split_file),
         batch_size=opt.batch_size,
         shuffle=True,
         num_workers=opt.workers if opt.is_Linux else 0,
@@ -189,11 +200,15 @@ def train_eval(opt):
         else:
             epochs_since_improvement = 0
 
+        save_name_plus = ''
+        if dev_origin:
+            save_name_plus = '_origin'
+
         save_checkpoint(opt.model_name, opt.data_name, epoch, epochs_since_improvement, model, optimizer, recent_acc,
-                        is_best)
+                        is_best, save_name_plus)
 
 
-def test(opt):
+def test(opt, origin):
     best_model = torch.load(opt.best_model, map_location='cpu')
     model = best_model['model']
 
@@ -201,8 +216,13 @@ def test(opt):
 
     criterion = nn.CrossEntropyLoss().to(opt.device)
 
+    if origin:
+        split_file = 'test_origin'
+    else:
+        split_file = 'test'
+
     test_loader = torch.utils.data.DataLoader(
-        SSTreebankDataset(opt.data_name, opt.output_folder, 'test'),
+        SSTreebankDataset(opt.data_name, opt.output_folder, split_file),
         batch_size=opt.batch_size,
         shuffle=True,
         num_workers=opt.workers if opt.is_Linux else 0,

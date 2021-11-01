@@ -20,11 +20,12 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     sentiment_labels = pd.read_csv(SST_path + 'sentiment_labels.txt', sep='|')
 
     dataset = pd.merge(pd.merge(pd.merge(datasetSentences, datasetSplit), dictionary), sentiment_labels)
+    dataset_no_crop = dataset
 
-    def labeling(sentiment_value):
-        if sentiment_value <= 0.4:
+    def labeling(sentiment_value, pivot=0.4):
+        if sentiment_value < pivot:
             return 0
-        elif sentiment_value > 0.6:
+        elif sentiment_value >= 1 - pivot:
             return 1
         else:
             return -1  # drop neutral
@@ -32,6 +33,8 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     # We can make a crop to dataset, but need further consideration
     dataset['sentiment_label'] = dataset['sentiment values'].apply(lambda x: labeling(x))
     dataset = dataset[dataset['sentiment_label'] != -1]
+
+    dataset_no_crop['sentiment_label'] = dataset_no_crop['sentiment values'].apply(lambda x: labeling(x, 0.5))
 
     def check_not_punctuation(token):
         for ch in token:
@@ -44,6 +47,7 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
         return [token for token in s if check_not_punctuation(token)]
 
     dataset['sentence'] = dataset['sentence'].apply(lambda s: filter_punctuation(s))
+    dataset_no_crop['sentence'] = dataset_no_crop['sentence'].apply(lambda s: filter_punctuation(s))
 
     word_freq = Counter()
     valid_idx = []
@@ -58,11 +62,17 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     word_map['<unk>'] = len(word_map) + 1
     word_map['<pad>'] = 0
 
+    # for dataset no crop
+    for i, tokens in enumerate(dataset_no_crop['sentence']):
+        if len(tokens) >= max_len:
+            dataset_no_crop['sentence'][i] = dataset_no_crop['sentence'][i][:max_len]
+
     def tokens_to_idx(word_tokens):
         return [word_map.get(word, word_map['<unk>']) for word in word_tokens] + [word_map['<pad>']] * (
                     max_len - len(word_tokens))
 
     dataset['token_idx'] = dataset['sentence'].apply(lambda x: tokens_to_idx(x))
+    dataset_no_crop['token_idx'] = dataset_no_crop['sentence'].apply(lambda x: tokens_to_idx(x))
 
     pretrain_embed, embed_dim = load_embeddings(emb_file, emb_format, word_map)
     embed = dict()
@@ -83,6 +93,16 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     # dev
     dataset[dataset['splitset_label'] == 3][['token_idx', 'sentiment_label']] \
         .to_csv(output_folder + data_name + '_' + 'dev.csv', index=False)
+
+    # train_origin
+    dataset_no_crop[dataset_no_crop['splitset_label'] == 1][['token_idx', 'sentiment_label']] \
+        .to_csv(output_folder + data_name + '_' + 'train_origin.csv', index=False)
+    # test origin
+    dataset_no_crop[dataset_no_crop['splitset_label'] == 2][['token_idx', 'sentiment_label']] \
+        .to_csv(output_folder + data_name + '_' + 'test_origin.csv', index=False)
+    # dev origin
+    dataset_no_crop[dataset_no_crop['splitset_label'] == 3][['token_idx', 'sentiment_label']] \
+        .to_csv(output_folder + data_name + '_' + 'dev_origin.csv', index=False)
 
     print('Preprocess End\n')
 

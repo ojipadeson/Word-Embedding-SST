@@ -10,3 +10,6 @@ class Config(object):
     emb_format = 'glove'
     min_word_freq = 1
     max_len = 40
+    train_origin = False
+    dev_origin = False
+    test_origin = True

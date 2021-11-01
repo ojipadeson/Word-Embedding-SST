@@ -1,20 +1,15 @@
+import time
 import torch
 import pandas as pd
 from torch.utils.data import Dataset
 
 
 class SSTreebankDataset(Dataset):
-    '''
-    创建dataloader
-    '''
-
     def __init__(self, data_name, output_folder, split):
-        '''
-        :param output_folder: 数据文件所在路径
-        :param split: 'train', 'dev', or 'test'
-        '''
         self.split = split
-        assert self.split in {'train', 'dev', 'test'}
+        assert self.split in {'train', 'dev', 'test', 'train_origin', 'dev_origin', 'test_origin'}
+        print('Loading DataSet:', self.split)
+        time.sleep(0.2)
 
         self.dataset = pd.read_csv(output_folder + data_name + '_' + split + '.csv')
 

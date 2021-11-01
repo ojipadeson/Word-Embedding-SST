@@ -35,10 +35,10 @@ def run(**kwargs):
                 setattr(model_opt, k, v)
 
         if global_opt.status == 'train':
-            models.TextAttnBiLSTM.train_eval(model_opt)
+            models.TextAttnBiLSTM.train_eval(model_opt, global_opt.train_origin, global_opt.dev_origin)
 
         elif global_opt.status == 'test':
-            models.TextAttnBiLSTM.test(model_opt)
+            models.TextAttnBiLSTM.test(model_opt, global_opt.test_origin)
 
 
 if __name__ == "__main__":
