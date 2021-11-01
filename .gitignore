@@ -105,3 +105,10 @@ venv.bak/
 checkpoints/
 data/
 m_log/
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/SST_PJ.iml
+/.idea/vcs.xml
