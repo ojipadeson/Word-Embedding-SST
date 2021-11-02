@@ -22,28 +22,29 @@ class ModelConfig:
     max_len = opt.max_len
 
     epochs = 120
-    batch_size = 16
+    batch_size = 64
     workers = 4
-    lr = 1e-3
+    lr = 3e-4
     weight_decay = 1e-5
     decay_epoch = 8
     improvement_epoch = 20
     is_Linux = False
     # print_freq = 100
+    store_checkpoint_epoch = 10
     checkpoint = None
     best_model = None
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model_name = 'TextAttnBiLSTM'
     class_num = 2
-    embed_dropout = 0.3
-    model_dropout = 0.5
-    fc_dropout = 0.5
+    embed_dropout = 0.2
+    model_dropout = 0.3
+    fc_dropout = 0.3
     num_layers = 2
     embed_dim = 128
     use_embed = True
-    use_gru = True
-    grad_clip = 4.
+    use_gru = False
+    grad_clip = None  # float require
 
 
 class Attn(nn.Module):
@@ -177,6 +178,7 @@ def train_eval(opt, train_origin, dev_origin):
             adjust_learning_rate(optimizer, epoch)
 
         if epochs_since_improvement == opt.improvement_epoch:
+            print('{} Epoch No Improve, Early Stop.'.format(opt.improvement_epoch))
             break
 
         train(train_loader=train_loader,
@@ -192,20 +194,24 @@ def train_eval(opt, train_origin, dev_origin):
                               criterion=criterion,
                               device=opt.device)
 
-        is_best = recent_acc > best_acc
-        best_acc = max(recent_acc, best_acc)
-        if not is_best:
-            epochs_since_improvement += 1
-            print("Epochs since last improvement: %d\n" % (epochs_since_improvement,))
-        else:
-            epochs_since_improvement = 0
+        is_best = False
+        if epoch > opt.store_checkpoint_epoch - 1:  # epoch start from 0
+            is_best = recent_acc > best_acc
+            best_acc = max(recent_acc, best_acc)
+            if not is_best:
+                epochs_since_improvement += 1
+                print("Epochs since last improvement: %d\n" % (epochs_since_improvement,))
+            else:
+                epochs_since_improvement = 0
 
         save_name_plus = ''
         if dev_origin:
             save_name_plus = '_origin'
 
-        save_checkpoint(opt.model_name, opt.data_name, epoch, epochs_since_improvement, model, optimizer, recent_acc,
-                        is_best, save_name_plus)
+        if epoch > opt.store_checkpoint_epoch - 1:
+            save_checkpoint(opt.model_name, opt.data_name, epoch, epochs_since_improvement,
+                            model, optimizer, recent_acc,
+                            is_best, save_name_plus)
 
 
 def test(opt, origin):

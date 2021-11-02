@@ -105,7 +105,7 @@ def accuracy(logits, targets):
 
 
 def adjust_learning_rate(optimizer, current_epoch):
-    frac = float(current_epoch - 20) / 50
+    frac = float(current_epoch - 10) / 50
     shrink_factor = math.pow(0.5, frac)
 
     print("DECAYING learning rate.")
@@ -182,6 +182,7 @@ def validate(val_loader, model, criterion, device):
             losses.update(loss.item())
 
         print('DEV LOSS: {loss.avg:.4f} | ACCURACY: {acc.avg:.4f}\n'.format(loss=losses, acc=accs))
+        time.sleep(0.2)
 
     return accs.avg
 
