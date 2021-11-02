@@ -13,6 +13,8 @@ warnings.filterwarnings("ignore")
 def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder, min_word_freq, max_len):
     assert data_name in {'SST-2'}
 
+    split_percent = 0.3
+
     print('Preprocess datasets...')
     datasetSentences = pd.read_csv(SST_path + 'datasetSentences.txt', sep='\t')
     dictionary = pd.read_csv(SST_path + 'dictionary.txt', sep='|', header=None, names=['sentence', 'phrase ids'])
@@ -23,15 +25,21 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     dataset_no_crop = dataset
 
     def labeling(sentiment_value, pivot=0.4):
-        if sentiment_value < pivot:
+        if pivot < sentiment_value < 0.5:
             return 0
-        elif sentiment_value >= 1 - pivot:
+        elif 0.5 <= sentiment_value < 1 - pivot:
             return 1
         else:
-            return -1  # drop neutral
+            return -1
+        # if sentiment_value < pivot:
+        #     return 0
+        # elif sentiment_value >= 1 - pivot:
+        #     return 1
+        # else:
+        #     return -1  # drop neutral
 
     # We can make a crop to dataset, but need further consideration
-    dataset['sentiment_label'] = dataset['sentiment values'].apply(lambda x: labeling(x))
+    dataset['sentiment_label'] = dataset['sentiment values'].apply(lambda x: labeling(x, split_percent))
     dataset = dataset[dataset['sentiment_label'] != -1]
 
     dataset_no_crop['sentiment_label'] = dataset_no_crop['sentiment values'].apply(lambda x: labeling(x, 0.5))
@@ -50,9 +58,14 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     dataset_no_crop['sentence'] = dataset_no_crop['sentence'].apply(lambda s: filter_punctuation(s))
 
     word_freq = Counter()
+    for i, tokens in enumerate(dataset_no_crop['sentence']):
+        word_freq.update(tokens)
+        if len(tokens) >= max_len:
+            dataset_no_crop['sentence'][i] = dataset_no_crop['sentence'][i][:max_len]
+
+    # for dataset
     valid_idx = []
     for i, tokens in enumerate(dataset['sentence']):
-        word_freq.update(tokens)
         if len(tokens) <= max_len:
             valid_idx.append(i)
     dataset = dataset.iloc[valid_idx, :]
@@ -61,11 +74,6 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
     word_map = {k: v + 1 for v, k in enumerate(words)}
     word_map['<unk>'] = len(word_map) + 1
     word_map['<pad>'] = 0
-
-    # for dataset no crop
-    for i, tokens in enumerate(dataset_no_crop['sentence']):
-        if len(tokens) >= max_len:
-            dataset_no_crop['sentence'][i] = dataset_no_crop['sentence'][i][:max_len]
 
     def tokens_to_idx(word_tokens):
         return [word_map.get(word, word_map['<unk>']) for word in word_tokens] + [word_map['<pad>']] * (
@@ -85,14 +93,15 @@ def create_input_files(data_name, SST_path, emb_file, emb_format, output_folder,
 
     # save dataset to csv
     # train
+    split_percent = 8
     dataset[dataset['splitset_label'] == 1][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'train.csv', index=False)
+        .to_csv(output_folder + data_name + '_' + 'train_' + str(split_percent)[-1] + '.csv', index=False)
     # test
     dataset[dataset['splitset_label'] == 2][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'test.csv', index=False)
+        .to_csv(output_folder + data_name + '_' + 'test_' + str(split_percent)[-1] + '.csv', index=False)
     # dev
     dataset[dataset['splitset_label'] == 3][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'dev.csv', index=False)
+        .to_csv(output_folder + data_name + '_' + 'dev_' + str(split_percent)[-1] + '.csv', index=False)
 
     # train_origin
     dataset_no_crop[dataset_no_crop['splitset_label'] == 1][['token_idx', 'sentiment_label']] \

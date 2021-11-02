@@ -9,7 +9,5 @@ class Config(object):
     emb_file = 'data/glove.6B.300d.txt'
     emb_format = 'glove'
     min_word_freq = 1
-    max_len = 40
-    train_origin = False
-    dev_origin = False
-    test_origin = True
+    max_len = 50
+    train_limit_unit = 4

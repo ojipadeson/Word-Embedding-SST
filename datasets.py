@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 class SSTreebankDataset(Dataset):
     def __init__(self, data_name, output_folder, split):
         self.split = split
-        assert self.split in {'train', 'dev', 'test', 'train_origin', 'dev_origin', 'test_origin'}
+        # assert self.split in {'train', 'dev', 'test', 'train_origin', 'dev_origin', 'test_origin'}
         print('Loading DataSet:', self.split)
         time.sleep(0.2)
 
