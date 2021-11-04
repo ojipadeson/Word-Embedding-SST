@@ -1,10 +1,15 @@
 import math
 import time
 
+import pandas as pd
 import torch
+import torch.utils.data
 import numpy as np
 from tqdm import tqdm
 from gensim.models import KeyedVectors as Vectors
+
+
+pd.options.mode.chained_assignment = None
 
 
 class AverageMeter(object):
@@ -184,7 +189,7 @@ def validate(val_loader, model, criterion, device):
         print('DEV LOSS: {loss.avg:.4f} | ACCURACY: {acc.avg:.4f}\n'.format(loss=losses, acc=accs))
         time.sleep(0.2)
 
-    return accs.avg
+    return accs.avg, losses.avg
 
 
 def testing(test_loader, model, criterion, device):
@@ -208,3 +213,24 @@ def testing(test_loader, model, criterion, device):
         print('Test LOSS - {loss.avg:.3f}, ACCURACY - {acc.avg:.3f}'.format(loss=losses, acc=accs))
 
     return accs.avg
+
+
+def predict_new_sample(model, device):
+    predict_samples = pd.read_csv('output_data/SST-2_test_SST.csv')
+
+    predict_samples['index'] = 0
+    predict_samples['prediction'] = 0
+
+    model = model.eval()
+
+    index = 0
+    with torch.no_grad():
+        for sents in predict_samples['token_idx']:
+            sents = torch.LongTensor([eval(sents)]).to(device)
+            logits = model(sents)
+            result = torch.max(logits, 1)[1].view(-1).cpu().numpy()
+            predict_samples['prediction'][index] = int(result)
+            predict_samples['index'][index] = index
+            index += 1
+
+    predict_samples[['prediction']].to_csv('prediction.tsv', sep='\t')

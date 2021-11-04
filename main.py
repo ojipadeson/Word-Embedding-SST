@@ -3,6 +3,7 @@ import models
 from config import Config
 from models.TextCNN import ModelCNN
 from models.TextAttnBiLSTM import ModelAttnBiLSTM
+from utils import predict_new_sample
 
 
 def run(**kwargs):
@@ -38,7 +39,8 @@ def run(**kwargs):
             models.TextAttnBiLSTM.train_eval(model_opt, global_opt.train_limit_unit)
 
         elif global_opt.status == 'test':
-            models.TextAttnBiLSTM.test(model_opt)
+            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_1)
+            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_2)
 
 
 if __name__ == "__main__":

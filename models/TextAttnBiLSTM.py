@@ -6,7 +6,7 @@ import torch.optim
 import torch.utils.data
 from config import Config
 from datasets import SSTreebankDataset
-from utils import adjust_learning_rate, save_checkpoint, train, validate, testing
+from utils import adjust_learning_rate, save_checkpoint, train, validate, testing, predict_new_sample
 
 
 class ModelConfig:
@@ -21,11 +21,11 @@ class ModelConfig:
     max_len = opt.max_len
 
     epochs = 120
-    batch_size = 16
-    workers = 4
-    lr = 1e-4
+    batch_size = 32
+    workers = 0
+    lr = 1.5e-4
     weight_decay = 1e-5
-    decay_epoch = 10
+    decay_epoch = 20
     improvement_epoch = 20
     is_Linux = False
     store_checkpoint_epoch = 0
@@ -35,14 +35,14 @@ class ModelConfig:
 
     model_name = 'TextAttnBiLSTM'
     class_num = 2
-    embed_dropout = 0.3
-    model_dropout = 0.5
-    fc_dropout = 0.5
+    embed_dropout = 0.5
+    model_dropout = 0.4
+    fc_dropout = 0.3
     num_layers = 2
     embed_dim = 4096
     use_embed = True
-    use_gru = True
-    grad_clip = 6.  # float require
+    use_gru = False
+    grad_clip = 4.  # float require
 
 
 class Attn(nn.Module):
@@ -106,6 +106,7 @@ class ModelAttnBiLSTM(nn.Module):
 
 def train_eval(opt, split_percent):
     best_acc = 0.
+    # best_loss = 100.
 
     # epoch
     start_epoch = 0
@@ -184,15 +185,16 @@ def train_eval(opt, split_percent):
               device=opt.device,
               grad_clip=opt.grad_clip)
 
-        recent_acc = validate(val_loader=val_loader,
-                              model=model,
-                              criterion=criterion,
-                              device=opt.device)
+        recent_acc, recent_loss = validate(val_loader=val_loader,
+                                           model=model,
+                                           criterion=criterion,
+                                           device=opt.device)
 
         is_best = False
         if epoch > opt.store_checkpoint_epoch - 1:  # epoch start from 0
-            is_best = recent_acc > best_acc
+            is_best = recent_acc > best_acc  # and recent_loss < best_loss
             best_acc = max(recent_acc, best_acc)
+            # best_loss = min(recent_loss, best_loss)
             if not is_best:
                 epochs_since_improvement += 1
                 print("Epochs since last improvement: %d\n" % (epochs_since_improvement,))
@@ -207,15 +209,13 @@ def train_eval(opt, split_percent):
                             is_best, save_name_plus)
 
 
-def test(opt):
-    best_model = torch.load(opt.best_model, map_location='cpu')
+def test(opt, split_file):
+    best_model = torch.load(opt.best_model, map_location='cuda:0')
     model = best_model['model']
 
     model = model.to(opt.device)
 
     criterion = nn.CrossEntropyLoss().to(opt.device)
-
-    split_file = 'test_origin'
 
     test_loader = torch.utils.data.DataLoader(
         SSTreebankDataset(opt.data_name, opt.output_folder, split_file),
@@ -225,3 +225,4 @@ def test(opt):
         pin_memory=True)
 
     testing(test_loader, model, criterion, opt.device)
+    predict_new_sample(model, opt.device)
