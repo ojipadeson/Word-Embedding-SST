@@ -7,6 +7,7 @@ import torch.utils.data
 from config import Config
 from datasets import SSTreebankDataset
 from utils import adjust_learning_rate, save_checkpoint, train, validate, testing, predict_new_sample
+from transformers import BertForSequenceClassification, AutoTokenizer
 
 
 class ModelConfig:
@@ -57,51 +58,54 @@ class Attn(nn.Module):
         return alpha
 
 
-class ModelAttnBiLSTM(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_size, pretrain_embed, use_gru, embed_dropout, fc_dropout,
-                 model_dropout, num_layers, class_num, use_embed):
+class BertModel(nn.Module):
+    def __init__(self, requires_grad=True):
+        super(BertModel, self).__init__()
+        self.bert = BertForSequenceClassification.from_pretrained('textattack/bert-base-uncased-SST-2', num_labels=2)
+        self.tokenizer = AutoTokenizer.from_pretrained('textattack/bert-base-uncased-SST-2', do_lower_case=True)
+        self.requires_grad = requires_grad
+        self.device = torch.device("cuda")
+        for param in self.bert.parameters():
+            param.requires_grad = requires_grad  # Each parameter requires gradient
 
-        super(ModelAttnBiLSTM, self).__init__()
-
-        self.hidden_size = hidden_size
-
-        if use_embed:
-            self.embedding = nn.Embedding(vocab_size, embed_dim).from_pretrained(pretrain_embed, freeze=False)
-        else:
-            self.embedding = nn.Embedding(vocab_size, embed_dim)
-
-        self.embed_dropout = nn.Dropout(embed_dropout)
-
-        if use_gru:
-            self.bilstm = nn.GRU(embed_dim, hidden_size, num_layers, dropout=(0 if num_layers == 1 else model_dropout),
-                                 bidirectional=True, batch_first=True)
-        else:
-            self.bilstm = nn.LSTM(embed_dim, hidden_size, num_layers, dropout=(0 if num_layers == 1 else model_dropout),
-                                  bidirectional=True, batch_first=True)
-
-        self.fc = nn.Linear(hidden_size, class_num)
-
-        self.fc_dropout = nn.Dropout(fc_dropout)
-
-        self.attn = Attn(hidden_size)
-
-    def forward(self, x):
-        x = self.embedding(x)
-        x = self.embed_dropout(x)
-
-        # y : all output, on all timestamp, it has double size of hidden size
-        # _ : only the last output
-        y, _ = self.bilstm(x)  # (batch_size, max_len, hidden_size*2)
-        y = y[:, :, :self.hidden_size] + y[:, :, self.hidden_size:]
-
-        alpha = self.attn(y)
-        r = alpha.bmm(y).squeeze(1)
-
-        h = torch.tanh(r)
-
-        logits = self.fc(h)
-        logits = self.fc_dropout(logits)
-        return logits
+    def forward(self, batch_seqs, batch_seq_masks, batch_seq_segments, labels):
+        loss, logits = self.bert(input_ids=batch_seqs, attention_mask=batch_seq_masks,
+                                 token_type_ids=batch_seq_segments, labels=labels)[:2]
+        probabilities = nn.functional.softmax(logits, dim=-1)
+        return loss, logits, probabilities
+    # def __init__(self, vocab_size, embed_dim, hidden_size, pretrain_embed, use_gru, embed_dropout, fc_dropout,
+    #              model_dropout, num_layers, class_num, use_embed):
+    #     super(ModelAttnBiLSTM, self).__init__()
+    #     self.hidden_size = hidden_size
+    #     if use_embed:
+    #         self.embedding = nn.Embedding(vocab_size, embed_dim).from_pretrained(pretrain_embed, freeze=False)
+    #     else:
+    #         self.embedding = nn.Embedding(vocab_size, embed_dim)
+    #     self.embed_dropout = nn.Dropout(embed_dropout)
+    #     if use_gru:
+    #         self.bilstm = nn.GRU(embed_dim, hidden_size, num_layers,
+    #         dropout=(0 if num_layers == 1 else model_dropout),
+    #                              bidirectional=True, batch_first=True)
+    #     else:
+    #         self.bilstm = nn.LSTM(embed_dim, hidden_size,
+    #         num_layers, dropout=(0 if num_layers == 1 else model_dropout),
+    #                               bidirectional=True, batch_first=True)
+    #     self.fc = nn.Linear(hidden_size, class_num)
+    #     self.fc_dropout = nn.Dropout(fc_dropout)
+    #     self.attn = Attn(hidden_size)
+    # def forward(self, x):
+    #     x = self.embedding(x)
+    #     x = self.embed_dropout(x)
+    #     # y : all output, on all timestamp, it has double size of hidden size
+    #     # _ : only the last output
+    #     y, _ = self.bilstm(x)  # (batch_size, max_len, hidden_size*2)
+    #     y = y[:, :, :self.hidden_size] + y[:, :, self.hidden_size:]
+    #     alpha = self.attn(y)
+    #     r = alpha.bmm(y).squeeze(1)
+    #     h = torch.tanh(r)
+    #     logits = self.fc(h)
+    #     logits = self.fc_dropout(logits)
+    #     return logits
 
 
 def train_eval(opt, split_percent):

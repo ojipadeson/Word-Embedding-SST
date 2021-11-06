@@ -39,8 +39,8 @@ def run(**kwargs):
             models.TextAttnBiLSTM.train_eval(model_opt, global_opt.train_limit_unit)
 
         elif global_opt.status == 'test':
-            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_1)
-            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_2)
+            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_1, False)
+            models.TextAttnBiLSTM.test(model_opt, global_opt.test_file_2, True)
 
 
 if __name__ == "__main__":

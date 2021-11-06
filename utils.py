@@ -158,8 +158,8 @@ def train(train_loader, model, criterion, optimizer, epoch, device, grad_clip=No
 
         optimizer.step()
 
-        accs.update(accuracy(logits, targets))
-        losses.update(loss.item())
+        accs.update(accuracy(logits, targets), labels.shape[0])
+        losses.update(loss.item(), labels.shape[0])
 
     print('\nEpoch: [{:04}] | '
           'Loss[Value(Average)]: {loss.avg:.4f} | '
@@ -183,8 +183,8 @@ def validate(val_loader, model, criterion, device):
 
             loss = criterion(logits, targets)
 
-            accs.update(accuracy(logits, targets))
-            losses.update(loss.item())
+            accs.update(accuracy(logits, targets), labels.shape[0])
+            losses.update(loss.item(), labels.shape[0])
 
         print('DEV LOSS: {loss.avg:.4f} | ACCURACY: {acc.avg:.4f}\n'.format(loss=losses, acc=accs))
         time.sleep(0.2)
@@ -207,8 +207,8 @@ def testing(test_loader, model, criterion, device):
 
             loss = criterion(logits, targets)
 
-            accs.update(accuracy(logits, targets))
-            losses.update(loss.item())
+            accs.update(accuracy(logits, targets), labels.shape[0])
+            losses.update(loss.item(), labels.shape[0])
 
         print('Test LOSS - {loss.avg:.3f}, ACCURACY - {acc.avg:.3f}'.format(loss=losses, acc=accs))
 

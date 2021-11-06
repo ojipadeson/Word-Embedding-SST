@@ -48,7 +48,8 @@ def create_origin_files(data_name, SST_path, emb_file, emb_format, output_folder
     datasetSplit = pd.read_csv(SST_path + 'datasetSplit.txt', sep=',')
     sentiment_labels = pd.read_csv(SST_path + 'sentiment_labels.txt', sep='|')
 
-    dataset_no_crop = pd.merge(pd.merge(pd.merge(datasetSentences, datasetSplit), dictionary), sentiment_labels)
+    dataset_no_crop = pd.merge(pd.merge(pd.merge(datasetSentences, datasetSplit), dictionary, on='sentence'),
+                               sentiment_labels)
     dataset_no_crop['sentiment_label'] = dataset_no_crop['sentiment values'].apply(lambda x: labeling(x, 0.5))
     dataset_no_crop['sentence'] = dataset_no_crop['sentence'].apply(lambda s: filter_punctuation(s))
 
