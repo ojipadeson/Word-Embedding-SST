@@ -1,7 +1,6 @@
 import os
 import json
 import torch
-import numpy as np
 import pandas as pd
 import warnings
 from utils import load_embeddings
@@ -88,50 +87,6 @@ def create_origin_files(data_name, SST_path, emb_file, emb_format, output_folder
     print('Origin preprocess End\n')
 
 
-def create_input_files(data_name, SST_path, output_folder,
-                       max_len, split_percent):
-    assert data_name in {'SST-2'}
-
-    print('Split percent:', str(split_percent), 'Preprocess datasets...')
-    datasetSentences = pd.read_csv(SST_path + 'datasetSentences.txt', sep='\t')
-    dictionary = pd.read_csv(SST_path + 'dictionary.txt', sep='|', header=None, names=['sentence', 'phrase ids'])
-    datasetSplit = pd.read_csv(SST_path + 'datasetSplit.txt', sep=',')
-    sentiment_labels = pd.read_csv(SST_path + 'sentiment_labels.txt', sep='|')
-
-    dataset = pd.merge(pd.merge(pd.merge(datasetSentences, datasetSplit), dictionary), sentiment_labels)
-
-    # We can make a crop to dataset, but need further consideration
-    dataset['sentiment_label'] = dataset['sentiment values'].apply(lambda x: labeling(x, split_percent))
-    dataset = dataset[dataset['sentiment_label'] != -1]
-
-    dataset['sentence'] = dataset['sentence'].apply(lambda s: filter_punctuation(s))
-
-    # valid_idx = []
-    for i, tokens in enumerate(dataset['sentence']):
-        if len(tokens) > max_len:
-            dataset['sentence'].iloc[i] = dataset['sentence'].iloc[i][:max_len]
-            # valid_idx.append(i)
-    # dataset = dataset.iloc[valid_idx, :]
-
-    with open(os.path.join(output_folder, data_name + '_' + 'wordmap.json'), 'r') as json_file:
-        word_map = json.load(json_file)
-
-    dataset['token_idx'] = dataset['sentence'].apply(lambda x: tokens_to_idx(word_map, x, max_len))
-
-    # save dataset to csv
-    # train
-    dataset[dataset['splitset_label'] == 1][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'train_' + str(split_percent)[-1] + '.csv', index=False)
-    # test
-    dataset[dataset['splitset_label'] == 2][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'test_' + str(split_percent)[-1] + '.csv', index=False)
-    # dev
-    dataset[dataset['splitset_label'] == 3][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'dev_' + str(split_percent)[-1] + '.csv', index=False)
-
-    print('Split percent:', str(split_percent), 'Preprocess End\n')
-
-
 def create_input_fromsst(data_name, SST_path, output_folder, max_len, mode):
     assert mode in {'train', 'test', 'dev'}
 
@@ -139,7 +94,7 @@ def create_input_fromsst(data_name, SST_path, output_folder, max_len, mode):
 
     if mode is not 'test':
         # dataset = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=0, names=['sentence', 'sentiment_label'])
-        dataset = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=0, names=['sentiment_label', 'sentence'])
+        dataset = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=0, names=['sentence', 'sentiment_label'])
     else:
         dataset = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=0, names=['index', 'sentence'])
 
@@ -162,28 +117,28 @@ def create_input_fromsst(data_name, SST_path, output_folder, max_len, mode):
     print('Preprocess from SST end --', mode, '\n')
 
 
-def create_test_label(SST_path, SST_2_path, mode):
-    assert mode in {'train', 'test', 'dev'}
+def create_input_test(data_name, SST_path, output_folder, max_len, mode):
+    print('Preprocess from SST-pj --', mode)
 
-    print('Process from SST-2 --', mode)
+    dataset = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=None, names=['sentiment_label', 'sentence'])
 
-    dataset_2_sst = pd.read_csv(SST_2_path + mode + '.tsv', sep='\t', header=0, names=['sentence', 'label'])
-    dataset_pj_sst = pd.read_csv(SST_path + mode + '.tsv', sep='\t', header=0, names=['index', 'sentence'])
+    dataset['sentence'] = dataset['sentence'].apply(lambda s: filter_punctuation(s))
+    for i, tokens in enumerate(dataset['sentence']):
+        if len(tokens) > max_len:
+            dataset['sentence'].iloc[i] = dataset['sentence'].iloc[i][:max_len]
 
-    dataset_pj_sst['label'] = -1
+    with open(os.path.join(output_folder, data_name + '_' + 'wordmap.json'), 'r') as json_file:
+        word_map = json.load(json_file)
 
-    i = 0
-    for sent in dataset_pj_sst['sentence']:
-        dataset_pj_sst['sentence'][i] = sent.lower()
-        i += 1
+    dataset['token_idx'] = dataset['sentence'].apply(lambda x: tokens_to_idx(word_map, x, max_len))
+    if mode is not 'test':
+        dataset[['token_idx', 'sentiment_label']].to_csv(output_folder + data_name + '_' + mode + '_SST' + '.csv',
+                                                         index=False)
+    else:
+        dataset[['token_idx']].to_csv(output_folder + data_name + '_' + mode + '_SST' + '.csv',
+                                      index=False)
 
-    for sent in dataset_2_sst['sentence']:
-        if sent in dataset_pj_sst['sentence']:
-            dataset_pj_sst[dataset_pj_sst['sentence'] == sent]['label'] = dataset_2_sst['label']
-
-    dataset_pj_sst.to_csv('SST_by_2.tsv', index=False, sep='\t')
-
-    print('Process from SST-2 end --', mode, '\n')
+    print('Preprocess from SST-pj end --', mode, '\n')
 
 
 def compare_same(output_folder, data_name, mode):
@@ -199,31 +154,26 @@ def compare_same(output_folder, data_name, mode):
 
 if __name__ == "__main__":
     opt = Config()
-    # create_origin_files(data_name=opt.data_name,
-    #                     SST_path=opt.SST_path,
-    #                     emb_file=opt.emb_file,
-    #                     emb_format=opt.emb_format,
-    #                     output_folder=opt.output_folder,
-    #                     min_word_freq=opt.min_word_freq,
-    #                     max_len=opt.max_len)
-    #
-    # for percentage in np.arange(0.3, 0.6, 0.1):
-    #     create_input_files(data_name=opt.data_name,
-    #                        SST_path=opt.SST_path,
-    #                        output_folder=opt.output_folder,
-    #                        max_len=opt.max_len,
-    #                        split_percent=percentage)
-    #
-    # for file_mode in ['train', 'dev', 'test']:
-    #     create_input_fromsst(data_name=opt.data_name,
-    #                          SST_path=opt.SST_pj_path,
-    #                          output_folder=opt.output_folder,
-    #                          max_len=opt.max_len,
-    #                          mode=file_mode)
-    #     compare_same(output_folder=opt.output_folder,
-    #                  data_name=opt.data_name,
-    #                  mode=file_mode)
+    create_origin_files(data_name=opt.data_name,
+                        SST_path=opt.SST_path,
+                        emb_file=opt.emb_file,
+                        emb_format=opt.emb_format,
+                        output_folder=opt.output_folder,
+                        min_word_freq=opt.min_word_freq,
+                        max_len=opt.max_len)
 
-    create_test_label(SST_path=opt.SST_pj_path,
-                      SST_2_path=opt.SST_2_path,
-                      mode='test')
+    for file_mode in ['train', 'dev', 'test']:
+        create_input_fromsst(data_name=opt.data_name,
+                             SST_path=opt.SST_pj_path,
+                             output_folder=opt.output_folder,
+                             max_len=opt.max_len,
+                             mode=file_mode)
+        compare_same(output_folder=opt.output_folder,
+                     data_name=opt.data_name,
+                     mode=file_mode)
+
+    create_input_test(data_name=opt.data_name,
+                      SST_path=opt.SST_pj_path,
+                      output_folder=opt.output_folder,
+                      max_len=opt.max_len,
+                      mode='test_pj')

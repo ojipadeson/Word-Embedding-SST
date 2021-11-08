@@ -7,9 +7,33 @@ import torch.utils.data
 import numpy as np
 from tqdm import tqdm
 from gensim.models import KeyedVectors as Vectors
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    classification_report
+)
 
 
 pd.options.mode.chained_assignment = None
+
+
+def Metric(y_true, y_pred):
+    """
+    compute and show the classification result
+    """
+    pred_accuracy = accuracy_score(y_true, y_pred)
+    macro_precision = precision_score(y_true, y_pred, average='macro')
+    macro_recall = recall_score(y_true, y_pred, average='macro')
+    weighted_f1 = f1_score(y_true, y_pred, average='macro')
+    target_names = ['class_0', 'class_1']
+    report = classification_report(y_true, y_pred, target_names=target_names, digits=3)
+
+    print('Accuracy: {:.1%}\nPrecision: {:.1%}\nRecall: {:.1%}\nF1: {:.1%}'.format(pred_accuracy, macro_precision,
+                                                                                   macro_recall, weighted_f1))
+    print("classification_report:\n")
+    print(report)
 
 
 class AverageMeter(object):
@@ -82,7 +106,7 @@ def load_embeddings(emb_file, emb_format, word_map):
 
         for emb_word in vocab:
 
-            if emb_word in vectors.index2word:
+            if emb_word in vectors.index_to_key:
 
                 embedding = vectors[emb_word]
                 cnt += 1
@@ -198,12 +222,18 @@ def testing(test_loader, model, criterion, device):
     losses = AverageMeter()
     accs = AverageMeter()
 
+    all_preds = []
+    all_labels = []
+
     with torch.no_grad():
         for i, (sents, labels) in enumerate(test_loader):
             sents = sents.to(device)
             targets = labels.to(device)
+            all_labels.extend(labels.cpu().numpy())
 
             logits = model(sents)
+            result = torch.max(logits, 1)[1].view(-1).cpu().numpy()
+            all_preds.extend(result)
 
             loss = criterion(logits, targets)
 
@@ -211,12 +241,13 @@ def testing(test_loader, model, criterion, device):
             losses.update(loss.item(), labels.shape[0])
 
         print('Test LOSS - {loss.avg:.3f}, ACCURACY - {acc.avg:.3f}'.format(loss=losses, acc=accs))
+        Metric(all_labels, all_preds)
 
     return accs.avg
 
 
-def predict_new_sample(model, device):
-    predict_samples = pd.read_csv('output_data/SST-2_test_SST.csv')
+def predict_new_sample(opt, model, device):
+    predict_samples = pd.read_csv(opt.output_folder + 'SST-2_test_SST.csv')
 
     predict_samples['index'] = 0
     predict_samples['prediction'] = 0

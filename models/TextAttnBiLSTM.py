@@ -26,7 +26,7 @@ class ModelConfig:
     lr = 1.5e-4
     weight_decay = 1e-5
     decay_epoch = 20
-    improvement_epoch = 20
+    improvement_epoch = 10
     is_Linux = False
     store_checkpoint_epoch = 0
     checkpoint = None  # 'checkpoints/BEST_checkpoint_SST-2_TextAttnBiLSTM_4.pth'
@@ -226,4 +226,4 @@ def test(opt, split_file, predict):
 
     testing(test_loader, model, criterion, opt.device)
     if predict:
-        predict_new_sample(model, opt.device)
+        predict_new_sample(opt, model, opt.device)
