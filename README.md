@@ -56,7 +56,7 @@ The prediction for test dataset will be saved in ```./prediction.tsv```
 
 ## Unsatisfied with the Accuracy?
 
-Go to https://github.com/ojipadeson/NLP-Project-SST for implementation of SOTA model
+Go to https://github.com/ojipadeson/NLP-SST-AdvanceBert for implementation of SOTA model
 
 ---
 
