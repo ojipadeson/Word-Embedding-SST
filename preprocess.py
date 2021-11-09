@@ -141,36 +141,22 @@ def create_input_test(data_name, SST_path, output_folder, max_len, mode):
     print('Preprocess from SST-pj end --', mode, '\n')
 
 
-def compare_same(output_folder, data_name, mode):
-    dataset_sst = pd.read_csv(output_folder + data_name + '_' + mode + '_SST' + '.csv')
-    dataset_origin = pd.read_csv(output_folder + data_name + '_' + mode + '_origin' + '.csv')
-
-    merge_set = pd.merge(dataset_origin, dataset_sst, on='token_idx')
-    if merge_set.shape[0] == dataset_origin.shape[0] == dataset_sst.shape[0]:
-        print(mode, 'data all same', '\n')
-    else:
-        print(mode, 'data not same', merge_set.shape[0], dataset_origin.shape[0], dataset_sst.shape[0], '\n')
-
-
 if __name__ == "__main__":
     opt = Config()
-    create_origin_files(data_name=opt.data_name,
-                        SST_path=opt.SST_path,
-                        emb_file=opt.emb_file,
-                        emb_format=opt.emb_format,
-                        output_folder=opt.output_folder,
-                        min_word_freq=opt.min_word_freq,
-                        max_len=opt.max_len)
-
-    for file_mode in ['train', 'dev', 'test']:
-        create_input_fromsst(data_name=opt.data_name,
-                             SST_path=opt.SST_pj_path,
-                             output_folder=opt.output_folder,
-                             max_len=opt.max_len,
-                             mode=file_mode)
-        compare_same(output_folder=opt.output_folder,
-                     data_name=opt.data_name,
-                     mode=file_mode)
+    # create_origin_files(data_name=opt.data_name,
+    #                     SST_path=opt.SST_path,
+    #                     emb_file=opt.emb_file,
+    #                     emb_format=opt.emb_format,
+    #                     output_folder=opt.output_folder,
+    #                     min_word_freq=opt.min_word_freq,
+    #                     max_len=opt.max_len)
+    #
+    # for file_mode in ['train', 'dev', 'test']:
+    #     create_input_fromsst(data_name=opt.data_name,
+    #                          SST_path=opt.SST_pj_path,
+    #                          output_folder=opt.output_folder,
+    #                          max_len=opt.max_len,
+    #                          mode=file_mode)
 
     create_input_test(data_name=opt.data_name,
                       SST_path=opt.SST_pj_path,

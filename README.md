@@ -40,6 +40,18 @@ python main.py run
 
 ## Test and Get Predictions
 
+**If** you have a ```test.tsv``` different from the one in this project's ```./data/SST``` directory, 
+you should rename your ```test.tsv``` to ```test_pj.tsv```,
+put it in the ```./data/SST``` directory,
+and simply run:
+
+```
+python preprocess.py
+```
+
+This will use the saved word map to interpret your ```test.tsv``` to tokens.
+
+For testing and getting predictions, simply run:
 ```
 python main.py run --status='test' --best_model="checkpoints/BEST_checkpoint_SST-2_TextAttnBiLSTM_SST.pth"
 ```

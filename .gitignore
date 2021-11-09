@@ -7,3 +7,6 @@ m_log/
 /checkpoints/BEST_checkpoint_SST-2_TextAttnBiLSTM_SST.pth
 /checkpoints/checkpoint_SST-2_TextAttnBiLSTM_SST.pth
 /checkpoints/all_best_model/
+/data/dev_pj.tsv
+/data/test.tsv
+/data/train_pj.tsv
