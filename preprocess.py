@@ -41,7 +41,7 @@ def create_origin_files(data_name, SST_path, emb_file, emb_format, output_folder
                         min_word_freq, max_len):
     assert data_name in {'SST-2'}
 
-    print('Preprocess origin datasets...')
+    print('Preprocess origin : Word map, embedding pth file...')
     datasetSentences = pd.read_csv(SST_path + 'datasetSentences.txt', sep='\t')
     dictionary = pd.read_csv(SST_path + 'dictionary.txt', sep='|', header=None, names=['sentence', 'phrase ids'])
     datasetSplit = pd.read_csv(SST_path + 'datasetSplit.txt', sep=',')
@@ -73,16 +73,6 @@ def create_origin_files(data_name, SST_path, emb_file, emb_format, output_folder
 
     with open(os.path.join(output_folder, data_name + '_' + 'wordmap.json'), 'w') as j:
         json.dump(word_map, j)
-
-    # train_origin
-    dataset_no_crop[dataset_no_crop['splitset_label'] == 1][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'train_origin.csv', index=False)
-    # test origin
-    dataset_no_crop[dataset_no_crop['splitset_label'] == 2][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'test_origin.csv', index=False)
-    # dev origin
-    dataset_no_crop[dataset_no_crop['splitset_label'] == 3][['token_idx', 'sentiment_label']] \
-        .to_csv(output_folder + data_name + '_' + 'dev_origin.csv', index=False)
 
     print('Origin preprocess End\n')
 
@@ -143,20 +133,21 @@ def create_input_test(data_name, SST_path, output_folder, max_len, mode):
 
 if __name__ == "__main__":
     opt = Config()
-    # create_origin_files(data_name=opt.data_name,
-    #                     SST_path=opt.SST_path,
-    #                     emb_file=opt.emb_file,
-    #                     emb_format=opt.emb_format,
-    #                     output_folder=opt.output_folder,
-    #                     min_word_freq=opt.min_word_freq,
-    #                     max_len=opt.max_len)
-    #
-    # for file_mode in ['train', 'dev', 'test']:
-    #     create_input_fromsst(data_name=opt.data_name,
-    #                          SST_path=opt.SST_pj_path,
-    #                          output_folder=opt.output_folder,
-    #                          max_len=opt.max_len,
-    #                          mode=file_mode)
+    if not opt.preprocess_ready:
+        create_origin_files(data_name=opt.data_name,
+                            SST_path=opt.SST_path,
+                            emb_file=opt.emb_file,
+                            emb_format=opt.emb_format,
+                            output_folder=opt.output_folder,
+                            min_word_freq=opt.min_word_freq,
+                            max_len=opt.max_len)
+
+        for file_mode in ['train', 'dev', 'test']:
+            create_input_fromsst(data_name=opt.data_name,
+                                 SST_path=opt.SST_pj_path,
+                                 output_folder=opt.output_folder,
+                                 max_len=opt.max_len,
+                                 mode=file_mode)
 
     create_input_test(data_name=opt.data_name,
                       SST_path=opt.SST_pj_path,

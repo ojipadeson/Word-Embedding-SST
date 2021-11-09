@@ -15,6 +15,8 @@ class Config(object):
     # emb_file = 'data/GoogleNews-vectors-negative300.bin'
     # emb_format = 'word2vec'
 
+    preprocess_ready = True
+
     min_word_freq = 1
     max_len = 40
 
