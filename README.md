@@ -62,6 +62,6 @@ Go to https://github.com/ojipadeson/NLP-SST-AdvanceBert for implementation of SO
 
 ---
 
->Copyright Notice: Modified from github@Doragd
+>Copyright Notice: Modified from [github@Doragd/Text-Classification-PyTorch](https://github.com/Doragd/Text-Classification-PyTorch)
 
 ---
