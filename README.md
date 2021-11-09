@@ -28,9 +28,12 @@ Word2Vec+LSTM+Attn  | 78.4 | 78.4 | 78.4 | 78.4 |
 Word2Vec+GRU+Attn   | 79.2 | 79.2 | 79.2 | 79.2 |
 GloVe+LSTM+Attn    	| 83.9 | 83.9 | 83.9 | 83.9 |
 **GloVe+GRU+Attn**  | **85.1** | **85.1** | **85.0** | **85.1** |
+GloVe+LSTM        	| 83.5 | 83.6 | 83.5 | 83.5 |
+GloVe+GRU           | 84.5 | 84.5 | 84.5 | 84.5 |
 
 * It's obvious that word embedding play an important roll in training
 * In this project, we set large dropout for better test performance
+* Models with ```Attention``` outperform those without 0.5% approximately
 
 ## Run this PJ(train)
 
@@ -58,6 +61,10 @@ For testing and getting predictions, simply run:
 python main.py run --status='test' --best_model="checkpoints/BEST_checkpoint_SST-2_TextAttnBiLSTM_SST.pth"
 ```
 The prediction for test dataset will be saved in ```./prediction.tsv```
+
+## Parameters
+
+Refer to ```class ModelConfig``` in [TextAttnBiLSTM.py](./models/TextAttnBiLSTM.py) and configurations in [config.py](./config.py)
 
 ## LICENSE
 #### This is a course project

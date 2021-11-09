@@ -41,7 +41,8 @@ class ModelConfig:
     num_layers = 2
     embed_dim = 4096
     use_embed = True
-    use_gru = False
+    use_gru = True
+    use_attn = False
     grad_clip = 4.  # float require
 
 
@@ -59,11 +60,12 @@ class Attn(nn.Module):
 
 class ModelAttnBiLSTM(nn.Module):
     def __init__(self, vocab_size, embed_dim, hidden_size, pretrain_embed, use_gru, embed_dropout, fc_dropout,
-                 model_dropout, num_layers, class_num, use_embed):
+                 model_dropout, num_layers, class_num, use_embed, use_attn):
 
         super(ModelAttnBiLSTM, self).__init__()
 
         self.hidden_size = hidden_size
+        self.use_attn = use_attn
 
         if use_embed:
             self.embedding = nn.Embedding(vocab_size, embed_dim).from_pretrained(pretrain_embed, freeze=False)
@@ -80,6 +82,7 @@ class ModelAttnBiLSTM(nn.Module):
                                   bidirectional=True, batch_first=True)
 
         self.fc = nn.Linear(hidden_size, class_num)
+        self.bifc = nn.Linear(hidden_size * 2, class_num)
 
         self.fc_dropout = nn.Dropout(fc_dropout)
 
@@ -91,15 +94,19 @@ class ModelAttnBiLSTM(nn.Module):
 
         # y : all output, on all timestamp, it has double size of hidden size
         # _ : only the last output
-        y, _ = self.bilstm(x)  # (batch_size, max_len, hidden_size*2)
-        y = y[:, :, :self.hidden_size] + y[:, :, self.hidden_size:]
+        y, _ = self.bilstm(x)
 
-        alpha = self.attn(y)
-        r = alpha.bmm(y).squeeze(1)
+        if self.use_attn:
+            y = y[:, :, :self.hidden_size] + y[:, :, self.hidden_size:]
+            alpha = self.attn(y)
+            r = alpha.bmm(y).squeeze(1)
+            h = torch.tanh(r)
+            logits = self.fc(h)
+        else:
+            y = y.view(x.shape[0], x.shape[1], 2, self.hidden_size)
+            y = torch.cat([y[:, -1, 0, :], y[:, 0, 1, :]], dim=-1)
+            logits = self.bifc(y)
 
-        h = torch.tanh(r)
-
-        logits = self.fc(h)
         logits = self.fc_dropout(logits)
         return logits
 
@@ -134,7 +141,8 @@ def train_eval(opt, split_percent):
                                 fc_dropout=opt.fc_dropout,
                                 embed_dropout=opt.embed_dropout,
                                 use_gru=opt.use_gru,
-                                use_embed=opt.use_embed)
+                                use_embed=opt.use_embed,
+                                use_attn=opt.use_attn)
 
         optimizer = torch.optim.Adam(params=model.parameters(),
                                      lr=opt.lr,
