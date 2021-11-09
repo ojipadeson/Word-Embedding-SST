@@ -14,9 +14,9 @@ Use GloVe/Word2Vec embedding, LSTM and Attention to do SST sentiment classificat
 
 We use 2 word embedding technique: GloVe & Word2Vec
 
-GLoVe: We use ```glove.840B.300d.txt```. You can download it from https://github.com/stanfordnlp/GloVe
+GLoVe: We use ```glove.840B.300d.txt```. You can download it from [stanfordnlp](https://github.com/stanfordnlp/GloVe)
 
-Word2Vec: We use ```GoogleNews-vectors-negative300.bin```. You can download .gz file from https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing
+Word2Vec: We use ```GoogleNews-vectors-negative300.bin```. You can download .gz file from [google drive](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing)
 
 ---
 
@@ -58,10 +58,10 @@ The prediction for test dataset will be saved in ```./prediction.tsv```
 
 ## Unsatisfied with the Accuracy?
 
-Go to https://github.com/ojipadeson/NLP-SST-AdvanceBert for implementation of SOTA model
+[Here](https://github.com/ojipadeson/NLP-SST-AdvanceBert) for implementation of SOTA model
 
 ---
 
->Copyright Notice: Modified from [github@Doragd/Text-Classification-PyTorch](https://github.com/Doragd/Text-Classification-PyTorch)
+>Copyright Notice: Modified from [this repo](https://github.com/Doragd/Text-Classification-PyTorch)
 
 ---
