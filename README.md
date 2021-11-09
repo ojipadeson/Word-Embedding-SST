@@ -49,6 +49,8 @@ and simply run:
 python preprocess.py
 ```
 
+If you encounter any trouble, [here](./data/README.md) may have some details.
+
 This will use the saved word map to interpret your ```test.tsv``` to tokens.
 
 For testing and getting predictions, simply run:
