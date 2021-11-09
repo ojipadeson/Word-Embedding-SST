@@ -58,9 +58,9 @@ index	sentence
 Please refer to above formats to commit your changes.
 
 **If** you have to use your own train dataset, change the parameter *mode* in 
-function ```create_input_test()``` -- ```preprocess.py``` from ```'test_pj'``` to ```train```,```dev```,
+function ```create_input_test()``` in [preprocess.py](../preprocess.py) from ```'test_pj'``` to ```train```,```dev```,
 and run preprocess.py each time.
 
-**If** you want to use embedding, change ```preprocess_ready``` to ```False``` in ```config.py```.
+**If** you want to use embedding, change ```preprocess_ready``` to ```False``` in [config.py](../config.py).
 
 **If** you want to use other datasets for embedding, feel free to contact me, any collaboration is welcomed.
