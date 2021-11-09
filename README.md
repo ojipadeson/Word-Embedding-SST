@@ -62,6 +62,8 @@ The prediction for test dataset will be saved in ```./prediction.tsv```
 
 ---
 
->Copyright Notice: Modified from [this repo](https://github.com/Doragd/Text-Classification-PyTorch)
+## Acknowledgment
+
+This project is based on [this repo@Doragd](https://github.com/Doragd/Text-Classification-PyTorch)
 
 ---
