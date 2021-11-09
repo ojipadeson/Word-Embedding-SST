@@ -1,5 +1,7 @@
 # Sentiment-Analysis Using Word Embedding & LSTM & Attention
 
+[[简体中文](README_zh.md) | [English](README.md)]
+
 ---
 
 Use GloVe/Word2Vec embedding, LSTM and Attention to do SST sentiment classification.
