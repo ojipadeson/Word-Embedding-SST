@@ -28,9 +28,9 @@ then you need to care nothing in this directory.
 Don't worry, the dataset here is wide enough so that the model would probably perform well in any *SST* dataset.
 *Only thing* you should do is to change ```test_pj.tsv```(with label) or ```test.tsv```(without label) file to your own test files
 
-Format of ```test_pj.tsv```
+Format of [test_pj.tsv](./SST/test_pj.tsv)
 
-```diff
+```apache
 
 1	effective but too-tepid biopic
 1	if you sometimes like to go to the movies to have fun , wasabi is a good place to start .
@@ -41,7 +41,7 @@ Format of ```test_pj.tsv```
 
 ```
 
-Format of ```test.tsv```
+Format of [test.tsv](./SST/test.tsv)
 
 ```fix
 
