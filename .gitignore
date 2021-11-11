@@ -10,3 +10,6 @@ m_log/
 /data/dev_pj.tsv
 /data/test.tsv
 /data/train_pj.tsv
+/mplstyle/
+/output_data/temp_plot.py
+/tree.txt
